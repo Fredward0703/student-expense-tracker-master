@@ -18,7 +18,9 @@ export default function ExpenseScreen() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
-  const [date,setDate] = useState('');
+  const [date, setDate] = useState('');
+  const [filter, setFilter] = useState('ALL');
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
 
   const loadExpenses = async () => {
     const rows = await db.getAllAsync(
@@ -28,6 +30,29 @@ export default function ExpenseScreen() {
   };
 
   const todayISO = () => new Date().toISOString().split('T')[0];
+
+  const applyFilter = (expensesList) => {
+    const now = new Date();
+
+    if (filter === 'ALL') return expensesList;
+
+    if (filter === 'WEEK') {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      return expensesList.filter(e => new Date(e.date) >= startOfWeek);
+    }
+
+    if (filter === 'MONTH') {
+      return expensesList.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+    }
+  };
+
+  useEffect(() => {
+    setFilteredExpenses(applyFilter(expenses));
+  }, [expenses, filter]);
 
   const addExpense = async () => {
     const amountNumber = parseFloat(amount);
@@ -129,13 +154,18 @@ export default function ExpenseScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Date (yyyy-mm-dd)"
+          placeholder="Date"
           placeholderTextColor="#9ca3af"
-          keyboardType="numeric"
           value={date}
           onChangeText={setDate}
         />
         <Button title="Add Expense" onPress={addExpense} />
+      </View>
+
+      <View style={styles.filter}>
+        <Button title="All" onPress={() => setFilter('ALL')} />
+        <Button title="This Week" onPress={() => setFilter('WEEK')} />
+        <Button title="This Month" onPress={() => setFilter('MONTH')} />
       </View>
 
       <FlatList
