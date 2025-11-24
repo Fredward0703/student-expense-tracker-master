@@ -131,7 +131,7 @@ export default function ExpenseScreen() {
         <Text style={styles.expenseAmount}>${Number(item.amount).toFixed(2)}</Text>
         <Text style={styles.expenseCategory}>{item.category}</Text>
         {item.note ? <Text style={styles.expenseNote}>{item.note}</Text> : null}
-        <Text style={styles.expenseDate}>&{Number(item.date)}</Text>
+        <Text style={styles.expenseDate}>{item.date}</Text>
       </View>
 
       <TouchableOpacity onPress={() => deleteExpense(item.id)}>
@@ -151,7 +151,8 @@ export default function ExpenseScreen() {
           date TEXT NOT NULL
         );
       `);
-
+      
+      await db.execAsync(`ALTER TABLE expenses ADD COLUMN date TEXT;`);
       await loadExpenses();
     }
 
@@ -187,7 +188,7 @@ export default function ExpenseScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Date"
+          placeholder="Date (YYYY-MM-DD)"
           placeholderTextColor="#9ca3af"
           value={date}
           onChangeText={setDate}
@@ -211,7 +212,7 @@ export default function ExpenseScreen() {
       </Text>
 
       <FlatList
-        data={expenses}
+        data={filteredExpenses}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderExpense}
         ListEmptyComponent={
@@ -220,8 +221,15 @@ export default function ExpenseScreen() {
       />
 
       <Modal visible={isEditing}>
-        <TextInput value={String(editingExpense?.amount)} />
-        <Button title='Save Change' onPress={saveEdit} />
+        <View style={styles.modal}>
+          <Text>Edit Expense</Text>
+          <TextInput value={String(editingExpense?.amount)} onChangeText={v => setEditingExpense({...editingExpense, amount: parseFloat(v)})} />
+          <TextInput value={String(editingExpense?.category)} onChangeText={v => setEditingExpense({...editingExpense, category: v})} />
+          <TextInput value={String(editingExpense?.note)} onChangeText={v => setEditingExpense({...editingExpense, note: v})} />
+          <TextInput value={String(editingExpense?.date)} onChangeText={v => setEditingExpense({...editingExpense, date: v})} />
+          <Button title='Save Change' onPress={saveEdit} />
+          <Button title='Cancel' onPress={() => setIsEditing(false)} />
+        </View>
       </Modal>
 
       <Text style={styles.footer}>
@@ -287,5 +295,22 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 12,
     fontSize: 12,
+  },
+  analytics: {
+    fontSize: 20,
+    color: '#fbbf24',
+    marginTop: 12,
+  },
+  analyticsSmall: {
+    fontSize: 14,
+    color: '#e5e7eb',
+    marginLeft: 8,
+  },
+  filters: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modal: {
+    padding: 20
   },
 });
