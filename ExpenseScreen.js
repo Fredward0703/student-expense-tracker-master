@@ -18,6 +18,7 @@ export default function ExpenseScreen() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [note, setNote] = useState('');
+  const [date,setDate] = useState('');
 
   const loadExpenses = async () => {
     const rows = await db.getAllAsync(
@@ -25,6 +26,9 @@ export default function ExpenseScreen() {
     );
     setExpenses(rows);
   };
+
+  const todayISO = () => new Date().toISOString().split('T')[0];
+
   const addExpense = async () => {
     const amountNumber = parseFloat(amount);
 
@@ -35,6 +39,8 @@ export default function ExpenseScreen() {
 
     const trimmedCategory = category.trim();
     const trimmedNote = note.trim();
+    const trimmedDate = date.trim();
+    
 
     if (!trimmedCategory) {
       // Category is required
@@ -42,13 +48,14 @@ export default function ExpenseScreen() {
     }
 
     await db.runAsync(
-      'INSERT INTO expenses (amount, category, note) VALUES (?, ?, ?);',
-      [amountNumber, trimmedCategory, trimmedNote || null]
+      'INSERT INTO expenses (amount, category, note, date) VALUES (?, ?, ?, ?);',
+      [amountNumber, trimmedCategory, trimmedNote, trimmedDate || todayISO()]
     );
 
     setAmount('');
     setCategory('');
     setNote('');
+    setDate('');
 
     loadExpenses();
   };
@@ -66,6 +73,7 @@ export default function ExpenseScreen() {
         <Text style={styles.expenseAmount}>${Number(item.amount).toFixed(2)}</Text>
         <Text style={styles.expenseCategory}>{item.category}</Text>
         {item.note ? <Text style={styles.expenseNote}>{item.note}</Text> : null}
+        <Text style={styles.expenseDate}>&{Number(item.date)}</Text>
       </View>
 
       <TouchableOpacity onPress={() => deleteExpense(item.id)}>
@@ -81,7 +89,8 @@ export default function ExpenseScreen() {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           amount REAL NOT NULL,
           category TEXT NOT NULL,
-          note TEXT
+          note TEXT,
+          date TEXT NOT NULL
         );
       `);
 
@@ -117,6 +126,14 @@ export default function ExpenseScreen() {
           placeholderTextColor="#9ca3af"
           value={note}
           onChangeText={setNote}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Date (yyyy-mm-dd)"
+          placeholderTextColor="#9ca3af"
+          keyboardType="numeric"
+          value={date}
+          onChangeText={setDate}
         />
         <Button title="Add Expense" onPress={addExpense} />
       </View>
