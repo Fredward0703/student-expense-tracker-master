@@ -21,6 +21,8 @@ export default function ExpenseScreen() {
   const [date, setDate] = useState('');
   const [filter, setFilter] = useState('ALL');
   const [filteredExpenses, setFilteredExpenses] = useState([]);
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const loadExpenses = async () => {
     const rows = await db.getAllAsync(
@@ -54,6 +56,16 @@ export default function ExpenseScreen() {
     (acc, e) => acc + e.amount,
     0
   );
+
+  const spendingByCategory = filteredExpenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + e.amount;
+    return acc;
+  }, {});
+
+  const openEdit = (expense) => {
+    setEditingExpense({...expense });
+    setIsEditing(true);
+  };
 
   useEffect(() => {
     setFilteredExpenses(applyFilter(expenses));
@@ -98,7 +110,7 @@ export default function ExpenseScreen() {
 
 
   const renderExpense = ({ item }) => (
-    <View style={styles.expenseRow}>
+    <TouchableOpacity onPress={() => openEdit(item)} style={styles.expenseRow}>
       <View style={{ flex: 1 }}>
         <Text style={styles.expenseAmount}>${Number(item.amount).toFixed(2)}</Text>
         <Text style={styles.expenseCategory}>{item.category}</Text>
@@ -109,7 +121,7 @@ export default function ExpenseScreen() {
       <TouchableOpacity onPress={() => deleteExpense(item.id)}>
         <Text style={styles.delete}>✕</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   useEffect(() => {
@@ -167,7 +179,7 @@ export default function ExpenseScreen() {
         <Button title="Add Expense" onPress={addExpense} />
       </View>
 
-      <View style={styles.filter}>
+      <View style={styles.filters}>
         <Button title="All" onPress={() => setFilter('ALL')} />
         <Button title="This Week" onPress={() => setFilter('WEEK')} />
         <Button title="This Month" onPress={() => setFilter('MONTH')} />
@@ -175,6 +187,11 @@ export default function ExpenseScreen() {
 
       <Text style={styles.analytics}>
         Total: ${totalSpending.toFixed(2)}
+        {Object.entries(spendingByCategory).map(([cat, total]) => (
+          <Text key={cat} style={styles.analyticsSmall}>
+            {cat}: ${total.toFixed(2)}
+          </Text>
+        ))}
       </Text>
 
       <FlatList
