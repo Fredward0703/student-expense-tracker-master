@@ -50,6 +50,11 @@ export default function ExpenseScreen() {
     }
   };
 
+  const totalSpending = filteredExpenses.reduce(
+    (acc, e) => acc + e.amount,
+    0
+  );
+
   useEffect(() => {
     setFilteredExpenses(applyFilter(expenses));
   }, [expenses, filter]);
@@ -167,6 +172,10 @@ export default function ExpenseScreen() {
         <Button title="This Week" onPress={() => setFilter('WEEK')} />
         <Button title="This Month" onPress={() => setFilter('MONTH')} />
       </View>
+
+      <Text style={styles.analytics}>
+        Total: ${totalSpending.toFixed(2)}
+      </Text>
 
       <FlatList
         data={expenses}
