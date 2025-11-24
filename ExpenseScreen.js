@@ -8,6 +8,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
 
@@ -65,6 +66,21 @@ export default function ExpenseScreen() {
   const openEdit = (expense) => {
     setEditingExpense({...expense });
     setIsEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const e = editingExpense;
+
+    await db.runAsync(
+      `UPDATE expenses
+      SET amount = ?, category = ?, note = ?, date = ?
+      WHERE id = ?;`,
+      [e.amount, e.category, e.note, e.date, e.id]
+    );
+
+    setIsEditing(false);
+    setEditingExpense(null);
+    loadExpenses();
   };
 
   useEffect(() => {
@@ -202,6 +218,11 @@ export default function ExpenseScreen() {
           <Text style={styles.empty}>No expenses yet.</Text>
         }
       />
+
+      <Modal visible={isEditing}>
+        <TextInput value={String(editingExpense?.amount)} />
+        <Button title='Save Change' onPress={saveEdit} />
+      </Modal>
 
       <Text style={styles.footer}>
         Enter your expenses and they’ll be saved locally with SQLite.
